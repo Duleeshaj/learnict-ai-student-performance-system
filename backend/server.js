@@ -25,8 +25,26 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "API test route working" });
 });
 
-// student routes
+
 app.use("/api/students", require("./routes/studentRoutes"));
+
+// prediction routes
+app.use("/api/prediction", require("./routes/predictionRoutes"));
+
+// prediction summary route
+app.use("/api/prediction-summary", require("./routes/predictionSummaryRoutes"));
+
+// unit routes
+app.use("/api/units", require("./routes/unitRoutes"));
+
+// unit attendance routes
+app.use("/api/unit-attendance", require("./routes/unitAttendanceRoutes"));
+
+// unit mark routes
+app.use("/api/unit-marks", require("./routes/unitMarkRoutes"));
+
+// general student performance routes
+app.use("/api/student-performance", require("./routes/studentPerformanceRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
