@@ -3,13 +3,13 @@ const Student = require("../models/Student");
 const UnitAttendance = require("../models/UnitAttendance");
 const UnitMark = require("../models/UnitMark");
 const StudentPerformance = require("../models/StudentPerformance");
+const TermTestMark = require("../models/TermTestMark");
 
 // predict using stored student records
 const predictStudentFromRecords = async (req, res) => {
   try {
     const { studentId } = req.params;
 
-    // find student
     const student = await Student.findOne({ studentId });
     if (!student) {
       return res.status(404).json({
@@ -17,10 +17,9 @@ const predictStudentFromRecords = async (req, res) => {
       });
     }
 
-    // get all attendance records of the student
+    // overall attendance percentage
     const attendanceRecords = await UnitAttendance.find({ studentId });
 
-    // calculate attendance percentage
     let attendance_percentage = 0;
 
     if (attendanceRecords.length > 0) {
@@ -31,10 +30,9 @@ const predictStudentFromRecords = async (req, res) => {
       attendance_percentage = (presentCount / attendanceRecords.length) * 100;
     }
 
-    // get all unit marks of the student
+    // average unit marks
     const unitMarks = await UnitMark.find({ studentId });
 
-    // calculate average unit marks
     let avg_unit_marks = 0;
 
     if (unitMarks.length > 0) {
@@ -46,21 +44,52 @@ const predictStudentFromRecords = async (req, res) => {
       avg_unit_marks = totalUnitMarks / unitMarks.length;
     }
 
-    // get general performance record
-    const performance = await StudentPerformance.findOne({ studentId });
+    // average sir term test marks
+    const sirTermMarks = await TermTestMark.find({
+      studentId,
+      testType: "sir_term_test",
+    });
 
-    if (!performance) {
-      return res.status(404).json({
-        message: "Student performance record not found",
-      });
+    let sir_term_test_avg = 0;
+
+    if (sirTermMarks.length > 0) {
+      const totalSirMarks = sirTermMarks.reduce(
+        (sum, record) => sum + record.mark,
+        0
+      );
+
+      sir_term_test_avg = totalSirMarks / sirTermMarks.length;
     }
 
-    const sir_term_test_avg = performance.sirTermTestAvg || 0;
-    const school_term_test_avg = performance.schoolTermTestAvg || 0;
-    const homework_completion_rate = performance.homeworkCompletionRate || 0;
-    const behavior_score = performance.behaviorScore || 0;
+    // average school term test marks
+    const schoolTermMarks = await TermTestMark.find({
+      studentId,
+      testType: "school_term_test",
+    });
 
-    // send summarized values to Flask AI API
+    let school_term_test_avg = 0;
+
+    if (schoolTermMarks.length > 0) {
+      const totalSchoolMarks = schoolTermMarks.reduce(
+        (sum, record) => sum + record.mark,
+        0
+      );
+
+      school_term_test_avg = totalSchoolMarks / schoolTermMarks.length;
+    }
+
+    // optional practical fields
+    const performance = await StudentPerformance.findOne({ studentId });
+
+    const homework_completion_rate =
+      performance?.homeworkCompletionRate ?? 0;
+
+    const behavior_score =
+      performance?.behaviorScore ?? 0;
+
+    const feedback = performance?.generalFeedback || "";
+
+    // send summarized values to Flask API
     const response = await axios.post(process.env.FLASK_API_URL, {
       attendance_percentage,
       avg_unit_marks,
@@ -76,11 +105,12 @@ const predictStudentFromRecords = async (req, res) => {
       calculated_inputs: {
         attendance_percentage: Number(attendance_percentage.toFixed(2)),
         avg_unit_marks: Number(avg_unit_marks.toFixed(2)),
-        sir_term_test_avg,
-        school_term_test_avg,
+        sir_term_test_avg: Number(sir_term_test_avg.toFixed(2)),
+        school_term_test_avg: Number(school_term_test_avg.toFixed(2)),
         homework_completion_rate,
         behavior_score,
       },
+      feedback,
       prediction: response.data,
     });
   } catch (error) {

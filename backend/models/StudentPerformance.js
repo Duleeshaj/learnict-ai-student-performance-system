@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-// general performance data per student
+// optional general performance data per student
 const studentPerformanceSchema = new mongoose.Schema(
   {
     student: {
@@ -20,24 +20,18 @@ const studentPerformanceSchema = new mongoose.Schema(
       required: true,
     },
 
-    sirTermTestAvg: {
-      type: Number,
-      default: 0,
-    },
-
-    schoolTermTestAvg: {
-      type: Number,
-      default: 0,
-    },
-
     homeworkCompletionRate: {
       type: Number,
-      default: 0,
+      default: null,
+      min: 0,
+      max: 100,
     },
 
     behaviorScore: {
       type: Number,
-      default: 0,
+      default: null,
+      min: 0,
+      max: 100,
     },
 
     generalFeedback: {

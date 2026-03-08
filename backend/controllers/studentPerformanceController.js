@@ -1,33 +1,35 @@
 const StudentPerformance = require("../models/StudentPerformance");
 const Student = require("../models/Student");
 
-// create or update general student performance data
+// create or update optional general student performance data
 const saveStudentPerformance = async (req, res) => {
   try {
     const {
       studentId,
-      sirTermTestAvg,
-      schoolTermTestAvg,
       homeworkCompletionRate,
       behaviorScore,
       generalFeedback,
     } = req.body;
 
-    // find student
     const student = await Student.findOne({ studentId });
+
     if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(404).json({
+        message: "Student not found",
+      });
     }
 
-    // check existing record
     let performance = await StudentPerformance.findOne({ studentId });
 
     if (performance) {
-      performance.sirTermTestAvg = sirTermTestAvg;
-      performance.schoolTermTestAvg = schoolTermTestAvg;
-      performance.homeworkCompletionRate = homeworkCompletionRate;
-      performance.behaviorScore = behaviorScore;
-      performance.generalFeedback = generalFeedback;
+      performance.homeworkCompletionRate =
+        homeworkCompletionRate ?? performance.homeworkCompletionRate;
+
+      performance.behaviorScore =
+        behaviorScore ?? performance.behaviorScore;
+
+      performance.generalFeedback =
+        generalFeedback ?? performance.generalFeedback;
 
       const updatedPerformance = await performance.save();
       return res.status(200).json(updatedPerformance);
@@ -37,11 +39,9 @@ const saveStudentPerformance = async (req, res) => {
       student: student._id,
       studentId: student.studentId,
       fullName: student.fullName,
-      sirTermTestAvg,
-      schoolTermTestAvg,
-      homeworkCompletionRate,
-      behaviorScore,
-      generalFeedback,
+      homeworkCompletionRate: homeworkCompletionRate ?? null,
+      behaviorScore: behaviorScore ?? null,
+      generalFeedback: generalFeedback || "",
     });
 
     const savedPerformance = await newPerformance.save();

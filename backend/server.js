@@ -46,6 +46,8 @@ app.use("/api/unit-marks", require("./routes/unitMarkRoutes"));
 // general student performance routes
 app.use("/api/student-performance", require("./routes/studentPerformanceRoutes"));
 
+app.use("/api/term-test-marks", require("./routes/termTestMarkRoutes"));
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
